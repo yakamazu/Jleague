@@ -59,5 +59,7 @@ summary(doinsu.lm)
 kekka <- input_test %>% dplyr::mutate(y = predict(doinsu.lm, newdata=input_test)) %>% select(id, y)
 
 #export csv
-write.csv(kekka, "export.csv", quote=FALSE, row.names=FALSE)
+#write.csv(kekka, "export.csv", quote=FALSE, row.names=FALSE)
+write.table(kekka, file="export.csv", sep=",", row.names = FALSE, col.names = FALSE)
+
 
