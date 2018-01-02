@@ -1,5 +1,6 @@
 # library
 library(dplyr)
+library(randomForest)
 
 # read data
 train <- read.csv('/home/bonju/deepanalytics/jleague/train.csv')
@@ -20,10 +21,9 @@ input_train <- dplyr::inner_join(input_train_tmp, stadium, by=c("stadium" = "nam
 input_test_tmp <- dplyr::inner_join(test, condition_all, by=c("id" = "id"))
 input_test <- dplyr::inner_join(input_test_tmp, stadium, by=c("stadium" = "name"))
 
-#confirm data type
-class(input_train$time)
 sapply(input_train, class)
 sapply(input_test, class)
+class(input_train$time)
 
 #convert_2factor
 #input_train$weather <- as.factor(input_train$weather)
@@ -52,11 +52,31 @@ input_test <- input_test %>% dplyr::mutate(weather_1 = substr(input_test$weather
 #input_test$time_h <- as.factor(input_test$time_h)
 #input_test$match_num <- as.factor(input_test$match_num)
 
+log(as.numeric(input_train$time_h))
+
+write.csv(input_train, "input_train.csv", quote=FALSE, row.names=FALSE)
+
 # create regression model
 doinsu.lm <- lm(y ~ stage + time_h + capa + match_num + temperature + humidity_num + yobi + away +weather_1, data=input_train)
-
 summary(doinsu.lm)
 kekka <- input_test %>% dplyr::mutate(y = predict(doinsu.lm, newdata=input_test)) %>% select(id, y)
+
+# create random forest model
+input_train$match_num <- as.factor(input_train$match_num)
+input_train$weather_1 <- as.factor(input_train$weather_1)
+input_train$yobi <- as.factor(input_train$yobi)
+input_test$match_num <- as.factor(input_test$match_num)
+input_test$weather_1 <- as.factor(input_test$weather_1)
+input_test$yobi <- as.factor(input_test$yobi)
+
+levels(input_test$match_num) <- levels(input_train$match_num)
+levels(input_test$yobi) <- levels(input_train$yobi)
+levels(input_test$away) <- levels(input_train$away)
+levels(input_test$weather_1) <- levels(input_train$weather_1)
+
+doinsu.rf <- randomForest(y ~ stage + time_h + capa + match_num + temperature + humidity_num + yobi + away +weather_1, data=input_train)
+summary(doinsu.rf)
+kekka <- input_test %>% dplyr::mutate(y = predict(doinsu.rf, newdata=input_test)) %>% select(id, y)
 
 #export csv
 #write.csv(kekka, "export.csv", quote=FALSE, row.names=FALSE)
